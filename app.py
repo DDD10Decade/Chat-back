@@ -29,19 +29,9 @@ def handle_new_message(data):
 def update_online_list(new_user):
     global user_dict
     name = new_user.get("name")
-    user_dict[str(request.remote_addr) + "/" + name] = name
+    new_client = str(request.remote_addr) + ":" + name
+    user_dict[new_client] = name
     emit("updateList", user_dict, broadcast=True)
-    print(user_dict)
-
-
-@socketio.on("OtherLeave")
-def OtherLeave_update(data):
-    global user_dict
-    name = data.get("name")
-    Leave_key = str(request.remote_addr) + "/" + name
-    emit("OtherLeave", {"name": name})
-    user_dict.pop(Leave_key)
-    print("聊天室现存：")
     print(user_dict)
 
 
@@ -51,11 +41,25 @@ def on_connect():
     print(u'new connection,id=[%s] connected' % request.remote_addr)
 
 
+@socketio.on('leave')
+def on_disconnect(data):
+    global user_dict
+    LeaveName = data.get("name")
+    # 连接对象关闭 删除对象ID
+    for key in list(user_dict.keys()):
+        if user_dict[key] == LeaveName:
+            user_dict.pop(key)
+            emit("OtherLeave", {"name": LeaveName}, broadcast=True)
+        else:
+            pass
+    print("%s离开,聊天室现存：" % LeaveName)
+    print(user_dict)
+
+
 @socketio.on('disconnect')  # 有客户端断开WebSocket会触发该函数
 def on_disconnect():
-    global user_dict
-    # 连接对象关闭 删除对象ID
-    print(u'connection id=[%s] exited' % request.remote_addr)
+    print("聊天室现存：")
+    print(user_dict)
 
 
 if __name__ == '__main__':
