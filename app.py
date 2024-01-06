@@ -1,5 +1,6 @@
 import time
-from flask import Flask, request, redirect, render_template, url_for
+
+from flask import Flask, request, render_template
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__, static_folder='static')
@@ -15,7 +16,7 @@ def login():  # put application's code here
     return render_template("index.html")
 
 
-@socketio.on('NewMessage')
+@socketio.on('NewMessage')  # 新消息
 def handle_new_message(data):
     global chat_message
     content = data.get('content')
@@ -25,7 +26,7 @@ def handle_new_message(data):
     emit('NewMessage', {"content": content, "sendName": name, "sendTime": now}, broadcast=True)
 
 
-@socketio.on('updateList')
+@socketio.on('updateList')  # 更新用户列表
 def update_online_list(new_user):
     global user_dict
     name = new_user.get("name")
@@ -41,7 +42,7 @@ def on_connect():
     print(u'new connection,id=[%s] connected' % request.remote_addr)
 
 
-@socketio.on('leave')
+@socketio.on('leave')  # 有用户离开会触发该函数
 def on_disconnect(data):
     global user_dict
     LeaveName = data.get("name")
@@ -63,5 +64,4 @@ def on_disconnect():
 
 
 if __name__ == '__main__':
-    # app.run()
     socketio.run(app, host='127.0.0.1', port=5000, debug=True)
